@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sladký Kout - Zmrzlinový Stánek</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .font-display {
+            font-family: 'Pacifico', cursive;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .animate-float-delayed {
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .animate-scaleIn {
+            animation: scaleIn 0.6s ease-out forwards;
+        }
+
+        .loading-shimmer {
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0) 0%, 
+                rgba(255,255,255,0.4) 50%, 
+                rgba(255,255,255,0) 100%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .ice-cream-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .ice-cream-card:hover {
+            transform: translateY(-10px) scale(1.05);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #FFE5EC 0%, #FFF0F5 25%, #E0F2FF 50%, #FFF8DC 75%, #FFE5EC 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .blob {
+            border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%;
+            animation: blobMorph 8s ease-in-out infinite;
+        }
+
+        @keyframes blobMorph {
+            0%, 100% { border-radius: 40% 60% 60% 40% / 60% 40% 60% 40%; }
+            50% { border-radius: 60% 40% 40% 60% / 40% 60% 40% 60%; }
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #FF6B9D 0%, #C084FC 50%, #60A5FA 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #FF6B9D;
+            box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FF6B9D 0%, #FFA5C4 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #FF5A8C 0%, #FF94B3 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 157, 0.3);
+        }
+
+        .scroll-fade {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease-out;
+        }
+
+        .scroll-fade.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const IceCreamShop = () => {
+            const [loading, setLoading] = useState(true);
+            const [orderForm, setOrderForm] = useState({
+                name: '',
+                phone: '',
+                flavor: '',
+                size: '',
+                address: '',
+                note: ''
+            });
+            const [orderSubmitted, setOrderSubmitted] = useState(false);
+            const [scrollProgress, setScrollProgress] = useState(0);
+
+            const iceCreams = [
+                { name: 'Vanilka', price: '45 Kč', color: 'bg-yellow-200', description: 'Klasická madagaskarská vanilka', emoji: '🍦' },
+                { name: 'Jahoda', price: '50 Kč', color: 'bg-pink-200', description: 'Čerstvé jahody ze zahrady', emoji: '🍓' },
+                { name: 'Čokoláda', price: '50 Kč', color: 'bg-amber-200', description: 'Belgická hořká čokoláda', emoji: '🍫' },
+                { name: 'Pistácie', price: '60 Kč', color: 'bg-green-200', description: 'Sicilské pistácie', emoji: '🌰' },
+                { name: 'Malina', price: '55 Kč', color: 'bg-rose-200', description: 'Intenzivní lesní maliny', emoji: '🫐' },
+                { name: 'Mango', price: '55 Kč', color: 'bg-orange-200', description: 'Tropické mango', emoji: '🥭' },
+                { name: 'Mátová čokoláda', price: '55 Kč', color: 'bg-teal-200', description: 'Osvěžující máta s kousky čokolády', emoji: '🍃' },
+                { name: 'Borůvka', price: '55 Kč', color: 'bg-indigo-200', description: 'Domácí borůvky', emoji: '🫐' },
+                { name: 'Karamel', price: '50 Kč', color: 'bg-amber-300', description: 'Slaný karamel', emoji: '🍯' },
+            ];
+
+            useEffect(() => {
+                // Simulate loading
+                setTimeout(() => setLoading(false), 1500);
+
+                // Scroll progress
+                const handleScroll = () => {
+                    const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    const progress = (window.scrollY / totalHeight) * 100;
+                    setScrollProgress(progress);
+
+                    // Fade in elements on scroll
+                    const elements = document.querySelectorAll('.scroll-fade');
+                    elements.forEach(el => {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.top < window.innerHeight * 0.8) {
+                            el.classList.add('visible');
+                        }
+                    });
+                };
+
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const handleInputChange = (e) => {
+                setOrderForm({ ...orderForm, [e.target.name]: e.target.value });
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setOrderSubmitted(true);
+                setTimeout(() => {
+                    setOrderSubmitted(false);
+                    setOrderForm({ name: '', phone: '', flavor: '', size: '', address: '', note: '' });
+                }, 3000);
+            };
+
+            if (loading) {
+                return (
+                    <div className="min-h-screen gradient-bg flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="text-8xl animate-float mb-8">🍦</div>
+                            <h2 className="text-3xl font-display text-gradient mb-4">Načítám sladkosti...</h2>
+                            <div className="w-64 h-2 bg-white/30 rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-pink-400 to-purple-400 loading-shimmer"></div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="gradient-bg min-h-screen">
+                    {/* Scroll Progress Bar */}
+                    <div className="fixed top-0 left-0 w-full h-1 bg-white/30 z-50">
+                        <div 
+                            className="h-full bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 transition-all duration-300"
+                            style={{ width: `${scrollProgress}%` }}
+                        ></div>
+                    </div>
+
+                    {/* Floating Decorations */}
+                    <div className="fixed top-20 left-10 text-6xl animate-float opacity-20 pointer-events-none">🍦</div>
+                    <div className="fixed top-40 right-20 text-5xl animate-float-delayed opacity-20 pointer-events-none">🍓</div>
+                    <div className="fixed bottom-40 left-20 text-6xl animate-float opacity-20 pointer-events-none">🍨</div>
+                    <div className="fixed bottom-20 right-10 text-5xl animate-float-delayed opacity-20 pointer-events-none">🍫</div>
+
+                    {/* Hero Section */}
+                    <section className="min-h-screen flex items-center justify-center relative overflow-hidden px-4">
+                        <div className="absolute inset-0">
+                            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-pink-300/30 rounded-full blob"></div>
+                            <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-300/30 rounded-full blob" style={{animationDelay: '2s'}}></div>
+                        </div>
+                        
+                        <div className="text-center relative z-10">
+                            <div className="text-9xl mb-8 animate-scaleIn">🍦</div>
+                            <h1 className="text-7xl md:text-9xl font-display text-gradient mb-6 animate-fadeInUp">
+                                Sladký Kout
+                            </h1>
+                            <p className="text-2xl md:text-3xl text-gray-700 mb-8 animate-fadeInUp font-medium" style={{animationDelay: '0.2s'}}>
+                                Nejlepší zmrzlina ve městě 🎉
+                            </p>
+                            <button 
+                                onClick={() => document.getElementById('menu').scrollIntoView({ behavior: 'smooth' })}
+                                className="btn-primary text-white px-10 py-4 rounded-full text-xl font-semibold shadow-xl animate-fadeInUp"
+                                style={{animationDelay: '0.4s'}}
+                            >
+                                Prohlédnout nabídku ✨
+                            </button>
+                        </div>
+                    </section>
+
+                    {/* Ice Cream Menu */}
+                    <section id="menu" className="py-20 px-4">
+                        <div className="max-w-7xl mx-auto">
+                            <h2 className="text-5xl md:text-6xl font-display text-center mb-4 text-gradient scroll-fade">
+                                Naše Zmrzliny
+                            </h2>
+                            <p className="text-center text-xl text-gray-600 mb-16 scroll-fade">
+                                Všechny příchutě jsou vyráběny čerstvě každý den z kvalitních surovin
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {iceCreams.map((ice, index) => (
+                                    <div 
+                                        key={index}
+                                        className={`ice-cream-card glass-effect rounded-3xl p-8 shadow-2xl scroll-fade ${ice.color} border-2 border-white/50`}
+                                        style={{animationDelay: `${index * 0.1}s`}}
+                                    >
+                                        <div className="text-6xl mb-4">{ice.emoji}</div>
+                                        <h3 className="text-3xl font-bold text-gray-800 mb-2">{ice.name}</h3>
+                                        <p className="text-gray-600 mb-4 text-lg">{ice.description}</p>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-2xl font-bold text-gray-800">{ice.price}</span>
+                                            <button className="bg-white/50 hover:bg-white/80 px-6 py-2 rounded-full font-semibold transition-all transform hover:scale-105">
+                                                Objednat
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Order Form */}
+                    <section id="order" className="py-20 px-4 bg-white/30">
+                        <div className="max-w-2xl mx-auto">
+                            <h2 className="text-5xl md:text-6xl font-display text-center mb-4 text-gradient scroll-fade">
+                                Online Objednávka
+                            </h2>
+                            <p className="text-center text-xl text-gray-600 mb-12 scroll-fade">
+                                Objednejte si zmrzlinu s rozvozem 🚗
+                            </p>
+
+                            {orderSubmitted ? (
+                                <div className="glass-effect rounded-3xl p-12 text-center animate-scaleIn shadow-2xl">
+                                    <div className="text-7xl mb-6">🎉</div>
+                                    <h3 className="text-3xl font-bold text-gray-800 mb-4">Objednávka přijata!</h3>
+                                    <p className="text-xl text-gray-600">Brzy vás budeme kontaktovat. Děkujeme! 💕</p>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleSubmit} className="glass-effect rounded-3xl p-8 md:p-12 shadow-2xl scroll-fade">
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="block text-lg font-semibold text-gray-700 mb-2">Jméno *</label>
+                                            <input 
+                                                type="text" 
+                                                name="name"
+                                                value={orderForm.name}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full px-6 py-4 rounded-2xl border-2 border-pink-200 focus:border-pink-400 transition-all text-lg"
+                                                placeholder="Vaše jméno"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-lg font-semibold text-gray-700 mb-2">Telefon *</label>
+                                            <input 
+                                                type="tel" 
+                                                name="phone"
+                                                value={orderForm.phone}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full px-6 py-4 rounded-2xl border-2 border-pink-200 focus:border-pink-400 transition-all text-lg"
+                                                placeholder="+420 123 456 789"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-lg font-semibold text-gray-700 mb-2">Příchutě *</label>
+                                            <select 
+                                                name="flavor"
+                                                value={orderForm.flavor}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full px-6 py-4 rounded-2xl border-2 border-pink-200 focus:border-pink-400 transition-all text-lg"
+                                            >
+                                                <option value="">Vyberte příchutě...</option>
+                                                {iceCreams.map((ice, index) => (
+                                                    <option key={index} value={ice.name}>{ice.emoji} {ice.name} - {ice.price}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-lg font-semibold text-gray-700 mb-2">Velikost *</label>
+                                            <select 
+                                                name="size"
+                                                value={orderForm.size}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full px-6 py-4 rounded-2xl border-2 border-pink-200 focus:border-pink-400 transition-all text-lg"
+                                            >
+                                                <option value="">Vyberte velikost...</option>
+                                                <option value="small">Malá (1 kopeček)</option>
+                                                <option value="medium">Střední (2 kopečky)</option>
+                                                <option value="large">Velká (3 kopečky)</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-lg font-semibold text-gray-700 mb-2">Adresa doručení *</label>
+                                            <input 
+                                                type="text" 
+                                                name="address"
+                                                value={orderForm.address}
+                                                onChange={handleInputChange}
+                                                required
+                                                className="w-full px-6 py-4 rounded-2xl border-2 border-pink-200 focus:border-pink-400 transition-all text-lg"
+                                                placeholder="Ulice, číslo, město"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-lg font-semibold text-gray-700 mb-2">Poznámka</label>
+                                            <textarea 
+                                                name="note"
+                                                value={orderForm.note}
+                                                onChange={handleInputChange}
+                                                rows="3"
+                                                className="w-full px-6 py-4 rounded-2xl border-2 border-pink-200 focus:border-pink-400 transition-all text-lg resize-none"
+                                                placeholder="Speciální požadavky..."
+                                            ></textarea>
+                                        </div>
+
+                                        <button 
+                                            type="submit"
+                                            className="w-full btn-primary text-white px-8 py-5 rounded-2xl text-xl font-bold shadow-xl"
+                                        >
+                                            Odeslat objednávku 🍦
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* Contact & Hours */}
+                    <section id="contact" className="py-20 px-4">
+                        <div className="max-w-6xl mx-auto">
+                            <h2 className="text-5xl md:text-6xl font-display text-center mb-16 text-gradient scroll-fade">
+                                Kde nás najdete
+                            </h2>
+
+                            <div className="grid md:grid-cols-2 gap-12">
+                                {/* Opening Hours */}
+                                <div className="glass-effect rounded-3xl p-10 shadow-2xl scroll-fade">
+                                    <h3 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                                        <span className="text-4xl mr-4">🕐</span>
+                                        Otevírací doba
+                                    </h3>
+                                    <div className="space-y-4 text-lg">
+                                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                                            <span className="font-semibold text-gray-700">Pondělí - Pátek</span>
+                                            <span className="text-gray-600">10:00 - 20:00</span>
+                                        </div>
+                                        <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                                            <span className="font-semibold text-gray-700">Sobota - Neděle</span>
+                                            <span className="text-gray-600">11:00 - 21:00</span>
+                                        </div>
+                                        <div className="mt-6 p-4 bg-pink-100 rounded-2xl">
+                                            <p className="text-center font-semibold text-pink-800">
+                                                ☀️ V létě otevřeno denně do 22:00!
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Contact Info */}
+                                <div className="glass-effect rounded-3xl p-10 shadow-2xl scroll-fade">
+                                    <h3 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                                        <span className="text-4xl mr-4">📍</span>
+                                        Kontakt
+                                    </h3>
+                                    <div className="space-y-6 text-lg">
+                                        <div>
+                                            <p className="font-semibold text-gray-700 mb-2">Adresa</p>
+                                            <p className="text-gray-600">Hlavní náměstí 123<br/>Praha 1, 110 00</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-gray-700 mb-2">Telefon</p>
+                                            <p className="text-gray-600">+420 123 456 789</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-gray-700 mb-2">Email</p>
+                                            <p className="text-gray-600">info@sladkykout.cz</p>
+                                        </div>
+                                        <div className="mt-6">
+                                            <p className="font-semibold text-gray-700 mb-3">Sledujte nás</p>
+                                            <div className="flex gap-4">
+                                                <button className="bg-pink-400 hover:bg-pink-500 text-white px-6 py-3 rounded-full font-semibold transition-all transform hover:scale-105">
+                                                    Instagram
+                                                </button>
+                                                <button className="bg-blue-400 hover:bg-blue-500 text-white px-6 py-3 rounded-full font-semibold transition-all transform hover:scale-105">
+                                                    Facebook
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Footer */}
+                    <footer className="bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 py-12 px-4">
+                        <div className="max-w-6xl mx-auto text-center">
+                            <p className="text-3xl font-display text-white mb-4">Sladký Kout</p>
+                            <p className="text-white/90 text-lg mb-6">Vyrobeno s láskou a spoustou zmrzliny 🍦💕</p>
+                            <p className="text-white/70">© 2026 Sladký Kout. Všechna práva vyhrazena.</p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<IceCreamShop />, document.getElementById('root'));
+    </script>
+</body>
+</html>
